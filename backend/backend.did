@@ -1,0 +1,4 @@
+service : {
+  getRoomUrl: () -> (opt text) query;
+  setRoomUrl: (text) -> ();
+}
