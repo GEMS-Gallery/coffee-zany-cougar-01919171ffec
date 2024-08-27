@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { AppBar, Toolbar, Typography, Button, Box, CircularProgress, Snackbar, Container } from '@mui/material';
 import { styled } from '@mui/system';
 import VideocamIcon from '@mui/icons-material/Videocam';
+import ConnectWithoutContactIcon from '@mui/icons-material/ConnectWithoutContact';
 import { backend } from 'declarations/backend';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
@@ -27,6 +28,8 @@ const VideoContainer = styled(Box)(({ theme }) => ({
 const Logo = styled(Typography)(({ theme }) => ({
   fontWeight: 'bold',
   letterSpacing: '1px',
+  display: 'flex',
+  alignItems: 'center',
 }));
 
 const App: React.FC = () => {
@@ -93,10 +96,9 @@ const App: React.FC = () => {
       <AppBar position="static" color="secondary" elevation={0}>
         <Toolbar>
           <Logo variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            IC VIDEO CHAT v0
+            <ConnectWithoutContactIcon sx={{ mr: 1 }} />
+            ConnectSphere
           </Logo>
-          <Button color="inherit" href="#">Docs</Button>
-          <Button color="inherit" href="#">Support</Button>
         </Toolbar>
       </AppBar>
       <StyledContainer maxWidth="md">
@@ -133,7 +135,7 @@ const App: React.FC = () => {
       <Box component="footer" sx={{ bgcolor: 'background.paper', py: 3, borderTop: '1px solid', borderColor: 'grey.200' }}>
         <Container maxWidth="lg">
           <Typography variant="body2" color="text.secondary" align="center">
-            © 2023 IC Video Chat. All rights reserved.
+            © 2024 ConnectSphere. All rights reserved.
           </Typography>
         </Container>
       </Box>
