@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { AppBar, Toolbar, Typography, Button, Box, CircularProgress, Snackbar, Container } from '@mui/material';
 import { styled } from '@mui/system';
 import VideocamIcon from '@mui/icons-material/Videocam';
-import FlashOnIcon from '@mui/icons-material/FlashOn';
+import WavesIcon from '@mui/icons-material/Waves';
 import { backend } from 'declarations/backend';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
@@ -96,8 +96,8 @@ const App: React.FC = () => {
       <AppBar position="static" color="secondary" elevation={0}>
         <Toolbar>
           <Logo variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            <FlashOnIcon sx={{ mr: 1 }} />
-            Zap
+            <WavesIcon sx={{ mr: 1 }} />
+            Vibe
           </Logo>
         </Toolbar>
       </AppBar>
@@ -135,7 +135,7 @@ const App: React.FC = () => {
       <Box component="footer" sx={{ bgcolor: 'background.paper', py: 3, borderTop: '1px solid', borderColor: 'grey.200' }}>
         <Container maxWidth="lg">
           <Typography variant="body2" color="text.secondary" align="center">
-            © 2024 Zap. All rights reserved.
+            © 2024 Vibe. All rights reserved.
           </Typography>
         </Container>
       </Box>
