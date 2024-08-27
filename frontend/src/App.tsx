@@ -97,7 +97,7 @@ const App: React.FC = () => {
         <Toolbar>
           <Logo variant="h6" component="div" sx={{ flexGrow: 1 }}>
             <LinkIcon sx={{ mr: 1 }} />
-            MeetLink
+            Link
           </Logo>
         </Toolbar>
       </AppBar>
@@ -135,7 +135,7 @@ const App: React.FC = () => {
       <Box component="footer" sx={{ bgcolor: 'background.paper', py: 3, borderTop: '1px solid', borderColor: 'grey.200' }}>
         <Container maxWidth="lg">
           <Typography variant="body2" color="text.secondary" align="center">
-            © 2024 MeetLink. All rights reserved.
+            © 2024 Link. All rights reserved.
           </Typography>
         </Container>
       </Box>
