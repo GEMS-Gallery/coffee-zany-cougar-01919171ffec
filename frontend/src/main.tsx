@@ -8,14 +8,21 @@ import './index.css';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#4a90e2',
+      main: '#000000',
     },
     secondary: {
-      main: '#f5f5f5',
+      main: '#ffffff',
     },
-    success: {
-      main: '#2ecc71',
+    background: {
+      default: '#ffffff',
     },
+    text: {
+      primary: '#000000',
+      secondary: '#666666',
+    },
+  },
+  typography: {
+    fontFamily: 'Roboto, sans-serif',
   },
 });
 
