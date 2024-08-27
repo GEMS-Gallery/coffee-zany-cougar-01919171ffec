@@ -1,29 +1,36 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Typography, Button, Box, CircularProgress, Snackbar } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, CircularProgress, Snackbar, Container, Grid, Paper, List, ListItem, ListItemIcon, ListItemText, Divider } from '@mui/material';
 import { styled } from '@mui/system';
 import VideocamIcon from '@mui/icons-material/Videocam';
+import InfoIcon from '@mui/icons-material/Info';
+import SettingsIcon from '@mui/icons-material/Settings';
+import HelpIcon from '@mui/icons-material/Help';
 import { backend } from 'declarations/backend';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  minHeight: '100vh',
-  padding: theme.spacing(2),
+  marginTop: theme.spacing(4),
+  marginBottom: theme.spacing(4),
 }));
 
 const StyledButton = styled(Button)(({ theme }) => ({
-  marginTop: theme.spacing(2),
-  marginBottom: theme.spacing(2),
+  margin: theme.spacing(2, 0),
 }));
 
-const VideoContainer = styled(Box)(({ theme }) => ({
+const VideoContainer = styled(Paper)(({ theme }) => ({
   width: '100%',
   height: '60vh',
-  backgroundColor: theme.palette.secondary.main,
+  backgroundColor: theme.palette.grey[200],
   borderRadius: theme.shape.borderRadius,
   overflow: 'hidden',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+}));
+
+const SidebarItem = styled(ListItem)(({ theme }) => ({
+  '&:hover': {
+    backgroundColor: theme.palette.action.hover,
+  },
 }));
 
 const App: React.FC = () => {
@@ -86,33 +93,89 @@ const App: React.FC = () => {
   };
 
   return (
-    <StyledContainer maxWidth="md">
-      <Typography variant="h4" component="h1" gutterBottom>
-        IC Video Chat
-      </Typography>
-      {!callFrame ? (
-        <StyledButton
-          variant="contained"
-          color="primary"
-          startIcon={<VideocamIcon />}
-          onClick={joinCall}
-          disabled={isLoading || !roomUrl}
-        >
-          {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Join Call'}
-        </StyledButton>
-      ) : (
-        <StyledButton variant="contained" color="secondary" onClick={leaveCall}>
-          Leave Call
-        </StyledButton>
-      )}
-      <VideoContainer id="video-container" />
+    <>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            IC Video Chat
+          </Typography>
+          <Button color="inherit">About</Button>
+          <Button color="inherit">Contact</Button>
+        </Toolbar>
+      </AppBar>
+      <StyledContainer maxWidth="lg">
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={8}>
+            <Typography variant="h4" gutterBottom>
+              Welcome to IC Video Chat
+            </Typography>
+            <VideoContainer id="video-container">
+              {!callFrame && (
+                <Typography variant="h6" color="textSecondary">
+                  Join a call to start video chatting
+                </Typography>
+              )}
+            </VideoContainer>
+            <StyledButton
+              variant="contained"
+              color={callFrame ? "secondary" : "primary"}
+              startIcon={callFrame ? undefined : <VideocamIcon />}
+              onClick={callFrame ? leaveCall : joinCall}
+              disabled={isLoading || (!callFrame && !roomUrl)}
+              fullWidth
+            >
+              {isLoading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : callFrame ? (
+                'Leave Call'
+              ) : (
+                'Join Call'
+              )}
+            </StyledButton>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Paper elevation={3} sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Chat Controls
+              </Typography>
+              <List>
+                <SidebarItem button>
+                  <ListItemIcon>
+                    <InfoIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Call Information" />
+                </SidebarItem>
+                <SidebarItem button>
+                  <ListItemIcon>
+                    <SettingsIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Settings" />
+                </SidebarItem>
+                <SidebarItem button>
+                  <ListItemIcon>
+                    <HelpIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Help" />
+                </SidebarItem>
+              </List>
+            </Paper>
+          </Grid>
+        </Grid>
+      </StyledContainer>
       <Snackbar
         open={!!error}
         autoHideDuration={6000}
         onClose={handleCloseError}
         message={error}
       />
-    </StyledContainer>
+      <Box component="footer" sx={{ bgcolor: 'background.paper', py: 6 }}>
+        <Container maxWidth="lg">
+          <Typography variant="body2" color="text.secondary" align="center">
+            © 2023 IC Video Chat. All rights reserved.
+          </Typography>
+        </Container>
+      </Box>
+    </>
   );
 };
 
