@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { AppBar, Toolbar, Typography, Button, Box, CircularProgress, Snackbar, Container, IconButton } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, CircularProgress, Snackbar, Container, TextField, Switch, FormControlLabel, IconButton } from '@mui/material';
 import { styled } from '@mui/system';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import LinkIcon from '@mui/icons-material/Link';
+import PeopleIcon from '@mui/icons-material/People';
+import ScreenShareIcon from '@mui/icons-material/ScreenShare';
 import ChatIcon from '@mui/icons-material/Chat';
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
+import PanToolIcon from '@mui/icons-material/PanTool';
 import { backend } from 'declarations/backend';
-import Chat from './Chat';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   marginTop: theme.spacing(4),
@@ -34,32 +37,62 @@ const Logo = styled(Typography)(({ theme }) => ({
   alignItems: 'center',
 }));
 
+const MenuBar = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  padding: theme.spacing(1),
+  backgroundColor: theme.palette.background.paper,
+  borderTop: `1px solid ${theme.palette.divider}`,
+}));
+
+const IconButtonWithLabel = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  margin: theme.spacing(0, 1),
+}));
+
 const App: React.FC = () => {
   const [callFrame, setCallFrame] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [roomUrl, setRoomUrl] = useState<string>('');
+  const [roomName, setRoomName] = useState('');
   const [error, setError] = useState<string>('');
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [roomConfig, setRoomConfig] = useState({
+    enable_people_ui: true,
+    enable_prejoin_ui: true,
+    enable_network_ui: true,
+    enable_emoji_reactions: true,
+    enable_hand_raising: true,
+    enable_screenshare: true,
+    enable_recording: false,
+    start_with_video_off: false,
+    enable_knocking: false,
+    enable_chat: true,
+    owner_only_broadcast: false,
+    close_tab_on_exit: false,
+    redirect_on_meeting_exit: '',
+  });
 
-  useEffect(() => {
-    const fetchRoomUrl = async () => {
-      try {
-        const url = await backend.getRoomUrl();
-        setRoomUrl(url);
-      } catch (err) {
-        console.error('Error fetching room URL:', err);
-        setError('Failed to fetch room URL. Please try again.');
-      }
-    };
-    fetchRoomUrl();
-  }, []);
-
-  const joinCall = useCallback(async () => {
-    if (!roomUrl || typeof roomUrl !== 'string' || roomUrl.trim() === '') {
-      setError('Invalid room URL. Please try again.');
+  const createRoom = useCallback(async () => {
+    if (!roomName) {
+      setError('Please enter a room name');
       return;
     }
+    setIsLoading(true);
+    try {
+      await backend.createRoom(roomName, roomConfig);
+      const url = await backend.getRoomUrl(roomName);
+      joinCall(url);
+    } catch (err) {
+      console.error('Error creating room:', err);
+      setError('Failed to create room. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [roomName, roomConfig]);
 
+  const joinCall = useCallback(async (url: string) => {
     setIsLoading(true);
     try {
       const frame = window.DailyIframe.createFrame(
@@ -73,7 +106,7 @@ const App: React.FC = () => {
           },
         }
       );
-      await frame.join({ url: roomUrl });
+      await frame.join({ url });
       setCallFrame(frame);
     } catch (err) {
       console.error('Error joining call:', err);
@@ -81,13 +114,12 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [roomUrl]);
+  }, []);
 
   const leaveCall = useCallback(() => {
     if (callFrame) {
       callFrame.destroy();
       setCallFrame(null);
-      setIsChatOpen(false);
     }
   }, [callFrame]);
 
@@ -95,8 +127,12 @@ const App: React.FC = () => {
     setError('');
   };
 
-  const toggleChat = () => {
-    setIsChatOpen(!isChatOpen);
+  const handleConfigChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, checked } = event.target;
+    setRoomConfig(prev => ({
+      ...prev,
+      [name]: event.target.type === 'checkbox' ? checked : value
+    }));
   };
 
   return (
@@ -107,42 +143,100 @@ const App: React.FC = () => {
             <LinkIcon sx={{ mr: 1 }} />
             Link
           </Logo>
-          {callFrame && (
-            <IconButton color="inherit" onClick={toggleChat}>
-              <ChatIcon />
-            </IconButton>
-          )}
         </Toolbar>
       </AppBar>
       <StyledContainer maxWidth="md">
-        <Box display="flex">
-          <VideoContainer id="video-container" sx={{ flexGrow: 1 }}>
-            {!callFrame && (
-              <Typography variant="h6" color="textSecondary">
-                Join a call to start video chatting
-              </Typography>
-            )}
-          </VideoContainer>
-          {isChatOpen && callFrame && (
-            <Chat callFrame={callFrame} />
-          )}
-        </Box>
-        <StyledButton
-          variant="contained"
-          color="primary"
-          startIcon={callFrame ? undefined : <VideocamIcon />}
-          onClick={callFrame ? leaveCall : joinCall}
-          disabled={isLoading || (!callFrame && !roomUrl)}
-          fullWidth
-        >
-          {isLoading ? (
-            <CircularProgress size={24} color="inherit" />
-          ) : callFrame ? (
-            'Leave Call'
-          ) : (
-            'Join Call'
-          )}
-        </StyledButton>
+        {!callFrame ? (
+          <Box>
+            <TextField
+              fullWidth
+              label="Room Name"
+              value={roomName}
+              onChange={(e) => setRoomName(e.target.value)}
+              margin="normal"
+            />
+            <Typography variant="h6" gutterBottom>Room Configuration</Typography>
+            {Object.entries(roomConfig).map(([key, value]) => (
+              key !== 'redirect_on_meeting_exit' ? (
+                <FormControlLabel
+                  key={key}
+                  control={
+                    <Switch
+                      checked={value as boolean}
+                      onChange={handleConfigChange}
+                      name={key}
+                    />
+                  }
+                  label={key.replace(/_/g, ' ')}
+                />
+              ) : (
+                <TextField
+                  key={key}
+                  fullWidth
+                  label="Redirect URL on exit"
+                  value={value as string}
+                  onChange={handleConfigChange}
+                  name={key}
+                  margin="normal"
+                />
+              )
+            ))}
+            <StyledButton
+              variant="contained"
+              color="primary"
+              startIcon={<VideocamIcon />}
+              onClick={createRoom}
+              disabled={isLoading}
+              fullWidth
+            >
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Create and Join Room'}
+            </StyledButton>
+          </Box>
+        ) : (
+          <>
+            <VideoContainer id="video-container" />
+            <MenuBar>
+              <IconButtonWithLabel>
+                <IconButton>
+                  <PeopleIcon />
+                </IconButton>
+                <Typography variant="caption">People</Typography>
+              </IconButtonWithLabel>
+              <IconButtonWithLabel>
+                <IconButton>
+                  <ChatIcon />
+                </IconButton>
+                <Typography variant="caption">Chat</Typography>
+              </IconButtonWithLabel>
+              <IconButtonWithLabel>
+                <IconButton>
+                  <ScreenShareIcon />
+                </IconButton>
+                <Typography variant="caption">Share</Typography>
+              </IconButtonWithLabel>
+              <IconButtonWithLabel>
+                <IconButton>
+                  <EmojiEmotionsIcon />
+                </IconButton>
+                <Typography variant="caption">Reactions</Typography>
+              </IconButtonWithLabel>
+              <IconButtonWithLabel>
+                <IconButton>
+                  <PanToolIcon />
+                </IconButton>
+                <Typography variant="caption">Raise Hand</Typography>
+              </IconButtonWithLabel>
+            </MenuBar>
+            <StyledButton
+              variant="contained"
+              color="primary"
+              onClick={leaveCall}
+              fullWidth
+            >
+              Leave Call
+            </StyledButton>
+          </>
+        )}
       </StyledContainer>
       <Snackbar
         open={!!error}

@@ -1,4 +1,22 @@
+type RoomConfig = 
+ record {
+   close_tab_on_exit: bool;
+   enable_chat: bool;
+   enable_emoji_reactions: bool;
+   enable_hand_raising: bool;
+   enable_knocking: bool;
+   enable_network_ui: bool;
+   enable_people_ui: bool;
+   enable_prejoin_ui: bool;
+   enable_recording: bool;
+   enable_screenshare: bool;
+   owner_only_broadcast: bool;
+   redirect_on_meeting_exit: opt text;
+   start_with_video_off: bool;
+ };
 service : {
-  getRoomUrl: () -> (text) query;
-  setRoomUrl: (text) -> ();
+  createRoom: (text, RoomConfig) -> ();
+  getRoomConfig: (text) -> (opt RoomConfig) query;
+  getRoomUrl: (text) -> (text) query;
+  updateRoomConfig: (text, RoomConfig) -> ();
 }
