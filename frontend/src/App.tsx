@@ -3,7 +3,11 @@ import { AppBar, Toolbar, Typography, Button, Box, CircularProgress, Snackbar, C
 import { styled } from '@mui/system';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import LinkIcon from '@mui/icons-material/Link';
-import NetworkCheckIcon from '@mui/icons-material/NetworkCheck';
+import PeopleIcon from '@mui/icons-material/People';
+import ScreenShareIcon from '@mui/icons-material/ScreenShare';
+import ChatIcon from '@mui/icons-material/Chat';
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
+import PanToolIcon from '@mui/icons-material/PanTool';
 import { backend } from 'declarations/backend';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
@@ -55,19 +59,19 @@ const App: React.FC = () => {
   const [roomName, setRoomName] = useState('');
   const [error, setError] = useState<string>('');
   const [roomConfig, setRoomConfig] = useState({
-    enable_people_ui: false,
-    enable_prejoin_ui: false,
+    enable_people_ui: true,
+    enable_prejoin_ui: true,
     enable_network_ui: true,
-    enable_emoji_reactions: false,
-    enable_hand_raising: false,
-    enable_screenshare: false,
+    enable_emoji_reactions: true,
+    enable_hand_raising: true,
+    enable_screenshare: true,
     enable_recording: false,
     start_with_video_off: false,
     enable_knocking: false,
-    enable_chat: false,
+    enable_chat: true,
     owner_only_broadcast: false,
     close_tab_on_exit: false,
-    redirect_on_meeting_exit: null as string | null,
+    redirect_on_meeting_exit: '',
   });
 
   const createRoom = useCallback(async () => {
@@ -124,10 +128,10 @@ const App: React.FC = () => {
   };
 
   const handleConfigChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, checked, type } = event.target;
+    const { name, value, checked } = event.target;
     setRoomConfig(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : (name === 'redirect_on_meeting_exit' ? (value || null) : value)
+      [name]: event.target.type === 'checkbox' ? checked : value
     }));
   };
 
@@ -153,17 +157,7 @@ const App: React.FC = () => {
             />
             <Typography variant="h6" gutterBottom>Room Configuration</Typography>
             {Object.entries(roomConfig).map(([key, value]) => (
-              key === 'redirect_on_meeting_exit' ? (
-                <TextField
-                  key={key}
-                  fullWidth
-                  label="Redirect URL on exit"
-                  value={value as string || ''}
-                  onChange={handleConfigChange}
-                  name={key}
-                  margin="normal"
-                />
-              ) : (
+              key !== 'redirect_on_meeting_exit' ? (
                 <FormControlLabel
                   key={key}
                   control={
@@ -174,6 +168,16 @@ const App: React.FC = () => {
                     />
                   }
                   label={key.replace(/_/g, ' ')}
+                />
+              ) : (
+                <TextField
+                  key={key}
+                  fullWidth
+                  label="Redirect URL on exit"
+                  value={value as string}
+                  onChange={handleConfigChange}
+                  name={key}
+                  margin="normal"
                 />
               )
             ))}
@@ -194,9 +198,33 @@ const App: React.FC = () => {
             <MenuBar>
               <IconButtonWithLabel>
                 <IconButton>
-                  <NetworkCheckIcon />
+                  <PeopleIcon />
                 </IconButton>
-                <Typography variant="caption">Network</Typography>
+                <Typography variant="caption">People</Typography>
+              </IconButtonWithLabel>
+              <IconButtonWithLabel>
+                <IconButton>
+                  <ChatIcon />
+                </IconButton>
+                <Typography variant="caption">Chat</Typography>
+              </IconButtonWithLabel>
+              <IconButtonWithLabel>
+                <IconButton>
+                  <ScreenShareIcon />
+                </IconButton>
+                <Typography variant="caption">Share</Typography>
+              </IconButtonWithLabel>
+              <IconButtonWithLabel>
+                <IconButton>
+                  <EmojiEmotionsIcon />
+                </IconButton>
+                <Typography variant="caption">Reactions</Typography>
+              </IconButtonWithLabel>
+              <IconButtonWithLabel>
+                <IconButton>
+                  <PanToolIcon />
+                </IconButton>
+                <Typography variant="caption">Raise Hand</Typography>
               </IconButtonWithLabel>
             </MenuBar>
             <StyledButton
