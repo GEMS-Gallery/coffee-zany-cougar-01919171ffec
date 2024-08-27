@@ -67,7 +67,7 @@ const App: React.FC = () => {
     enable_chat: false,
     owner_only_broadcast: false,
     close_tab_on_exit: false,
-    redirect_on_meeting_exit: '',
+    redirect_on_meeting_exit: null as string | null,
   });
 
   const createRoom = useCallback(async () => {
@@ -124,10 +124,10 @@ const App: React.FC = () => {
   };
 
   const handleConfigChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = event.target;
+    const { name, value, checked, type } = event.target;
     setRoomConfig(prev => ({
       ...prev,
-      [name]: checked
+      [name]: type === 'checkbox' ? checked : (name === 'redirect_on_meeting_exit' ? (value || null) : value)
     }));
   };
 
@@ -152,16 +152,31 @@ const App: React.FC = () => {
               margin="normal"
             />
             <Typography variant="h6" gutterBottom>Room Configuration</Typography>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={roomConfig.enable_network_ui}
+            {Object.entries(roomConfig).map(([key, value]) => (
+              key === 'redirect_on_meeting_exit' ? (
+                <TextField
+                  key={key}
+                  fullWidth
+                  label="Redirect URL on exit"
+                  value={value as string || ''}
                   onChange={handleConfigChange}
-                  name="enable_network_ui"
+                  name={key}
+                  margin="normal"
                 />
-              }
-              label="Enable Network UI"
-            />
+              ) : (
+                <FormControlLabel
+                  key={key}
+                  control={
+                    <Switch
+                      checked={value as boolean}
+                      onChange={handleConfigChange}
+                      name={key}
+                    />
+                  }
+                  label={key.replace(/_/g, ' ')}
+                />
+              )
+            ))}
             <StyledButton
               variant="contained"
               color="primary"
