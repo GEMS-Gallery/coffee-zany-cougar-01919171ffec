@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Typography, Button, Box, CircularProgress } from '@mui/material';
+import { Container, Typography, Button, Box, CircularProgress, Snackbar } from '@mui/material';
 import { styled } from '@mui/system';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import { backend } from 'declarations/backend';
@@ -29,36 +29,49 @@ const VideoContainer = styled(Box)(({ theme }) => ({
 const App: React.FC = () => {
   const [callFrame, setCallFrame] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [roomUrl, setRoomUrl] = useState<string | null>(null);
+  const [roomUrl, setRoomUrl] = useState<string>('');
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
     const fetchRoomUrl = async () => {
-      const url = await backend.getRoomUrl();
-      if (url) {
+      try {
+        const url = await backend.getRoomUrl();
         setRoomUrl(url);
+      } catch (err) {
+        console.error('Error fetching room URL:', err);
+        setError('Failed to fetch room URL. Please try again.');
       }
     };
     fetchRoomUrl();
   }, []);
 
   const joinCall = useCallback(async () => {
-    if (!roomUrl) return;
+    if (!roomUrl || typeof roomUrl !== 'string' || roomUrl.trim() === '') {
+      setError('Invalid room URL. Please try again.');
+      return;
+    }
 
     setIsLoading(true);
-    const frame = window.DailyIframe.createFrame(
-      document.getElementById('video-container'),
-      {
-        iframeStyle: {
-          width: '100%',
-          height: '100%',
-          border: '0',
-          borderRadius: '8px',
-        },
-      }
-    );
-    await frame.join({ url: roomUrl });
-    setCallFrame(frame);
-    setIsLoading(false);
+    try {
+      const frame = window.DailyIframe.createFrame(
+        document.getElementById('video-container'),
+        {
+          iframeStyle: {
+            width: '100%',
+            height: '100%',
+            border: '0',
+            borderRadius: '8px',
+          },
+        }
+      );
+      await frame.join({ url: roomUrl });
+      setCallFrame(frame);
+    } catch (err) {
+      console.error('Error joining call:', err);
+      setError('Failed to join the call. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   }, [roomUrl]);
 
   const leaveCall = useCallback(() => {
@@ -67,6 +80,10 @@ const App: React.FC = () => {
       setCallFrame(null);
     }
   }, [callFrame]);
+
+  const handleCloseError = () => {
+    setError('');
+  };
 
   return (
     <StyledContainer maxWidth="md">
@@ -89,6 +106,12 @@ const App: React.FC = () => {
         </StyledButton>
       )}
       <VideoContainer id="video-container" />
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={handleCloseError}
+        message={error}
+      />
     </StyledContainer>
   );
 };

@@ -10,7 +10,7 @@ actor {
   };
 
   // Retrieve the room URL
-  public query func getRoomUrl() : async ?Text {
-    roomUrl
+  public query func getRoomUrl() : async Text {
+    Option.get(roomUrl, "https://you.daily.co/hello")
   };
 }
