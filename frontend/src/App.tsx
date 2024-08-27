@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { AppBar, Toolbar, Typography, Button, Box, CircularProgress, Snackbar, Container } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, CircularProgress, Snackbar, Container, IconButton } from '@mui/material';
 import { styled } from '@mui/system';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import LinkIcon from '@mui/icons-material/Link';
+import ChatIcon from '@mui/icons-material/Chat';
 import { backend } from 'declarations/backend';
+import Chat from './Chat';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   marginTop: theme.spacing(4),
@@ -37,6 +39,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [roomUrl, setRoomUrl] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   useEffect(() => {
     const fetchRoomUrl = async () => {
@@ -84,11 +87,16 @@ const App: React.FC = () => {
     if (callFrame) {
       callFrame.destroy();
       setCallFrame(null);
+      setIsChatOpen(false);
     }
   }, [callFrame]);
 
   const handleCloseError = () => {
     setError('');
+  };
+
+  const toggleChat = () => {
+    setIsChatOpen(!isChatOpen);
   };
 
   return (
@@ -99,16 +107,26 @@ const App: React.FC = () => {
             <LinkIcon sx={{ mr: 1 }} />
             Link
           </Logo>
+          {callFrame && (
+            <IconButton color="inherit" onClick={toggleChat}>
+              <ChatIcon />
+            </IconButton>
+          )}
         </Toolbar>
       </AppBar>
       <StyledContainer maxWidth="md">
-        <VideoContainer id="video-container">
-          {!callFrame && (
-            <Typography variant="h6" color="textSecondary">
-              Join a call to start video chatting
-            </Typography>
+        <Box display="flex">
+          <VideoContainer id="video-container" sx={{ flexGrow: 1 }}>
+            {!callFrame && (
+              <Typography variant="h6" color="textSecondary">
+                Join a call to start video chatting
+              </Typography>
+            )}
+          </VideoContainer>
+          {isChatOpen && callFrame && (
+            <Chat callFrame={callFrame} />
           )}
-        </VideoContainer>
+        </Box>
         <StyledButton
           variant="contained"
           color="primary"
