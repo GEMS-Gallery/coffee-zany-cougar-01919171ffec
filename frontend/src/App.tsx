@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { AppBar, Toolbar, Typography, Button, Box, CircularProgress, Snackbar, Container, TextField, Switch, FormControlLabel } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, CircularProgress, Snackbar, Container, IconButton } from '@mui/material';
 import { styled } from '@mui/system';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import LinkIcon from '@mui/icons-material/Link';
+import ChatIcon from '@mui/icons-material/Chat';
 import { backend } from 'declarations/backend';
+import Chat from './Chat';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   marginTop: theme.spacing(4),
@@ -35,43 +37,29 @@ const Logo = styled(Typography)(({ theme }) => ({
 const App: React.FC = () => {
   const [callFrame, setCallFrame] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [roomName, setRoomName] = useState('');
+  const [roomUrl, setRoomUrl] = useState<string>('');
   const [error, setError] = useState<string>('');
-  const [roomConfig, setRoomConfig] = useState({
-    enable_people_ui: true,
-    enable_prejoin_ui: true,
-    enable_network_ui: true,
-    enable_emoji_reactions: true,
-    enable_hand_raising: true,
-    enable_screenshare: true,
-    enable_recording: false,
-    start_with_video_off: false,
-    enable_knocking: false,
-    enable_chat: true,
-    owner_only_broadcast: false,
-    close_tab_on_exit: false,
-    redirect_on_meeting_exit: '',
-  });
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
-  const createRoom = useCallback(async () => {
-    if (!roomName) {
-      setError('Please enter a room name');
+  useEffect(() => {
+    const fetchRoomUrl = async () => {
+      try {
+        const url = await backend.getRoomUrl();
+        setRoomUrl(url);
+      } catch (err) {
+        console.error('Error fetching room URL:', err);
+        setError('Failed to fetch room URL. Please try again.');
+      }
+    };
+    fetchRoomUrl();
+  }, []);
+
+  const joinCall = useCallback(async () => {
+    if (!roomUrl || typeof roomUrl !== 'string' || roomUrl.trim() === '') {
+      setError('Invalid room URL. Please try again.');
       return;
     }
-    setIsLoading(true);
-    try {
-      await backend.createRoom(roomName, roomConfig);
-      const url = await backend.getRoomUrl(roomName);
-      joinCall(url);
-    } catch (err) {
-      console.error('Error creating room:', err);
-      setError('Failed to create room. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [roomName, roomConfig]);
 
-  const joinCall = useCallback(async (url: string) => {
     setIsLoading(true);
     try {
       const frame = window.DailyIframe.createFrame(
@@ -85,7 +73,7 @@ const App: React.FC = () => {
           },
         }
       );
-      await frame.join({ url });
+      await frame.join({ url: roomUrl });
       setCallFrame(frame);
     } catch (err) {
       console.error('Error joining call:', err);
@@ -93,12 +81,13 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [roomUrl]);
 
   const leaveCall = useCallback(() => {
     if (callFrame) {
       callFrame.destroy();
       setCallFrame(null);
+      setIsChatOpen(false);
     }
   }, [callFrame]);
 
@@ -106,12 +95,8 @@ const App: React.FC = () => {
     setError('');
   };
 
-  const handleConfigChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, checked } = event.target;
-    setRoomConfig(prev => ({
-      ...prev,
-      [name]: event.target.type === 'checkbox' ? checked : value
-    }));
+  const toggleChat = () => {
+    setIsChatOpen(!isChatOpen);
   };
 
   return (
@@ -122,68 +107,42 @@ const App: React.FC = () => {
             <LinkIcon sx={{ mr: 1 }} />
             Link
           </Logo>
+          {callFrame && (
+            <IconButton color="inherit" onClick={toggleChat}>
+              <ChatIcon />
+            </IconButton>
+          )}
         </Toolbar>
       </AppBar>
       <StyledContainer maxWidth="md">
-        {!callFrame ? (
-          <Box>
-            <TextField
-              fullWidth
-              label="Room Name"
-              value={roomName}
-              onChange={(e) => setRoomName(e.target.value)}
-              margin="normal"
-            />
-            <Typography variant="h6" gutterBottom>Room Configuration</Typography>
-            {Object.entries(roomConfig).map(([key, value]) => (
-              key !== 'redirect_on_meeting_exit' ? (
-                <FormControlLabel
-                  key={key}
-                  control={
-                    <Switch
-                      checked={value as boolean}
-                      onChange={handleConfigChange}
-                      name={key}
-                    />
-                  }
-                  label={key.replace(/_/g, ' ')}
-                />
-              ) : (
-                <TextField
-                  key={key}
-                  fullWidth
-                  label="Redirect URL on exit"
-                  value={value as string}
-                  onChange={handleConfigChange}
-                  name={key}
-                  margin="normal"
-                />
-              )
-            ))}
-            <StyledButton
-              variant="contained"
-              color="primary"
-              startIcon={<VideocamIcon />}
-              onClick={createRoom}
-              disabled={isLoading}
-              fullWidth
-            >
-              {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Create and Join Room'}
-            </StyledButton>
-          </Box>
-        ) : (
-          <>
-            <VideoContainer id="video-container" />
-            <StyledButton
-              variant="contained"
-              color="primary"
-              onClick={leaveCall}
-              fullWidth
-            >
-              Leave Call
-            </StyledButton>
-          </>
-        )}
+        <Box display="flex">
+          <VideoContainer id="video-container" sx={{ flexGrow: 1 }}>
+            {!callFrame && (
+              <Typography variant="h6" color="textSecondary">
+                Join a call to start video chatting
+              </Typography>
+            )}
+          </VideoContainer>
+          {isChatOpen && callFrame && (
+            <Chat callFrame={callFrame} />
+          )}
+        </Box>
+        <StyledButton
+          variant="contained"
+          color="primary"
+          startIcon={callFrame ? undefined : <VideocamIcon />}
+          onClick={callFrame ? leaveCall : joinCall}
+          disabled={isLoading || (!callFrame && !roomUrl)}
+          fullWidth
+        >
+          {isLoading ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : callFrame ? (
+            'Leave Call'
+          ) : (
+            'Join Call'
+          )}
+        </StyledButton>
       </StyledContainer>
       <Snackbar
         open={!!error}
